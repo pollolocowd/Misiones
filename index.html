@@ -6,31 +6,44 @@
   <title>Acceso Distribuidor</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f2f2f2;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e8edf1, #cfd9df);
       padding: 20px;
       text-align: center;
+      color: #333;
     }
     .hidden {
       display: none;
     }
     input, button {
-      padding: 10px;
-      margin: 5px;
+      padding: 12px;
+      margin: 8px;
       width: 90%;
       max-width: 300px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #004d99;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0066cc;
     }
     .card {
       background: white;
-      border-radius: 10px;
-      padding: 20px;
+      border-radius: 12px;
+      padding: 30px 20px;
       margin: auto;
-      max-width: 400px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 420px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
     }
     .bouncy {
       animation: bounce 2s infinite;
-      width: 120px;
+      width: 100px;
       margin: 20px 10px 0;
     }
     .bouncy-container {
