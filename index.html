@@ -1,93 +1,51 @@
-
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <title>Mis Comisiones</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <style>
-    body { font-family: sans-serif; background: #f0f4f8; text-align: center; padding: 30px; }
-    .card { background: white; padding: 25px; margin: auto; max-width: 400px;
-            border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-    input, button { padding: 10px; width: 100%; margin-top: 10px; border-radius: 5px; }
-    button { background-color: #007bff; color: white; font-weight: bold; border: none; }
-  </style>
+  <title>Mis Comisiones Distribuidor</title>
 </head>
 <body>
-
-<div class="card" id="login">
   <h2>Acceso Distribuidor</h2>
-  <input type="password" id="accessCode" placeholder="Código de acceso">
-  <button onclick="login()">Entrar</button>
-  <p id="loginError" style="color: red; display: none;">Código no válido</p>
-</div>
+  <input type="text" id="codigo" placeholder="Código de acceso" />
+  <button onclick="login()">Ingresar</button>
+  <div id="resultado" style="margin-top: 20px;"></div>
 
-<div class="card" id="dashboard" style="display: none;">
-  <h2>Mis Comisiones</h2>
-  <p>Saldo actual: $<span id="saldo"></span></p>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-  <h3>Solicitar Retiro</h3>
-  <input type="text" id="banco" placeholder="Banco">
-  <input type="text" id="cuenta" placeholder="Cuenta (10-18 dígitos)">
-  <input type="number" id="monto" placeholder="Monto a retirar">
-  <button onclick="solicitarRetiro()">Solicitar Retiro</button>
-
-  <p id="msg" style="margin-top: 10px;"></p>
-</div>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyD2MlMhFSi6zVx26tSCxQH_zf7DomtNtJE",
-    authDomain: "banca-comisiones.firebaseapp.com",
-    projectId: "banca-comisiones",
-    storageBucket: "banca-comisiones.firebasestorage.app",
-    messagingSenderId: "13645114022",
-    appId: "1:13645114022:web:c69d46b83b12cf20cb6267"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-
-  let currentCode = null;
-
-  function login() {
-    const code = document.getElementById("accessCode").value.trim();
-    db.ref('usuarios/' + code).get().then(snapshot => {
-      if (snapshot.exists()) {
-        currentCode = code;
-        document.getElementById("saldo").innerText = snapshot.val().saldo.toFixed(2);
-        document.getElementById("login").style.display = 'none';
-        document.getElementById("dashboard").style.display = 'block';
-        document.getElementById("loginError").style.display = 'none';
-      } else {
-        document.getElementById("loginError").style.display = 'block';
-      }
-    });
-  }
-
-  function solicitarRetiro() {
-    const banco = document.getElementById("banco").value.trim();
-    const cuenta = document.getElementById("cuenta").value.trim();
-    const monto = parseFloat(document.getElementById("monto").value);
-    const msg = document.getElementById("msg");
-
-    if (!banco || !/^\d{10,18}$/.test(cuenta) || isNaN(monto) || monto <= 0) {
-      msg.style.color = "red";
-      msg.innerText = "Datos inválidos.";
-      return;
-    }
-
-    const solicitud = {
-      banco, cuenta, monto,
-      timestamp: Date.now(),
-      estado: "pendiente"
+  <script>
+    // Tu configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyD2MlMhFSi6zVx26tSCxQH_zf7DomtNtJE",
+      authDomain: "banca-comisiones.firebaseapp.com",
+      projectId: "banca-comisiones",
+      databaseURL: "https://banca-comisiones-default-rtdb.firebaseio.com",
+      storageBucket: "banca-comisiones.appspot.com",
+      messagingSenderId: "13645114022",
+      appId: "1:13645114022:web:c69d46b83b12cf20cb6267"
     };
 
-    db.ref('solicitudes/' + currentCode).push(solicitud);
-    msg.style.color = "orange";
-    msg.innerText = "Fallo de retiro: debes completar tareas para retirar.";
-  }
-</script>
+    // Inicializa Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Función para login
+    function login() {
+      const codigo = document.getElementById("codigo").value.trim();
+
+      db.ref("usuarios/" + codigo).once("value", (snapshot) => {
+        if (snapshot.exists()) {
+          const datos = snapshot.val();
+          document.getElementById("resultado").innerHTML = `
+            <h3>Bienvenido</h3>
+            <p>Saldo: $${datos.saldo}</p>
+          `;
+        } else {
+          document.getElementById("resultado").innerHTML = "Código inválido.";
+        }
+      });
+    }
+  </script>
 </body>
 </html>
