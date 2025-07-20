@@ -80,6 +80,13 @@
           return;
         }
 
+        // ✅ VALIDACIÓN NUEVA de número de cuenta:
+        const cuentaSoloNumeros = cuenta.replace(/\D/g, "");
+        if (![10, 11, 12, 13, 14, 16, 18].includes(cuentaSoloNumeros.length)) {
+          alert("Error: El número de cuenta no es válido. Debe tener entre 10 y 18 dígitos.");
+          return;
+        }
+
         if (monto <= 0) {
           alert("Monto inválido");
           return;
