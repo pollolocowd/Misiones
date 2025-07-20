@@ -60,7 +60,7 @@
           const data = snapshot.val();
           currentUserKey = codigo;
           currentSaldo = data.saldo;
-          document.getElementById("welcome").innerText = `Bienvenido ${data.nombre}`;
+          document.getElementById("welcome").innerText = "Bienvenido";
           document.getElementById("saldo").innerText = `Saldo: $${currentSaldo}`;
           document.getElementById("retiroForm").classList.remove("hidden");
         } else {
