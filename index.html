@@ -48,6 +48,7 @@
 
     let currentUserKey = "";
     let currentSaldo = 0;
+    let currentNombre = "";
 
     document.addEventListener("DOMContentLoaded", () => {
       const ingresoBtn = document.getElementById("ingresarBtn");
@@ -59,8 +60,9 @@
         if (snapshot.exists()) {
           const data = snapshot.val();
           currentUserKey = codigo;
-          currentSaldo = data.saldo;
-          document.getElementById("welcome").innerText = "Bienvenido";
+          currentSaldo = data.saldo || 0;
+          currentNombre = data.nombre || "";
+          document.getElementById("welcome").innerText = `Bienvenido ${currentNombre}`;
           document.getElementById("saldo").innerText = `Saldo: $${currentSaldo}`;
           document.getElementById("retiroForm").classList.remove("hidden");
         } else {
@@ -78,19 +80,29 @@
           return;
         }
 
-        if (monto <= 0 || monto > currentSaldo) {
-          alert("Monto inválido o saldo insuficiente");
+        if (monto <= 0) {
+          alert("Monto inválido");
           return;
         }
 
-        const nuevoSaldo = currentSaldo - monto;
-        await update(ref(db, "usuarios/" + currentUserKey), {
-          saldo: nuevoSaldo
+        if (monto > currentSaldo) {
+          alert("Saldo insuficiente");
+          return;
+        }
+
+        // Crear una solicitud de retiro pendiente
+        const solicitudId = Date.now();
+        await update(ref(db, `solicitudes/${currentUserKey}/${solicitudId}`), {
+          banco,
+          cuenta,
+          monto,
+          estado: "pendiente"
         });
 
-        currentSaldo = nuevoSaldo;
-        document.getElementById("saldo").innerText = `Saldo: $${currentSaldo}`;
-        alert(`Retiro de $${monto} solicitado con éxito (simulado).`);
+        alert("Tu solicitud ha sido enviada. Espera aprobación del administrador.");
+        document.getElementById("monto").value = "";
+        document.getElementById("cuenta").value = "";
+        document.getElementById("banco").value = "";
       });
     });
   </script>
