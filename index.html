@@ -1,51 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Mis Comisiones Distribuidor</title>
-</head>
-<body>
-  <h2>Acceso Distribuidor</h2>
-  <input type="text" id="codigo" placeholder="Código de acceso" />
-  <button onclick="login()">Ingresar</button>
-  <div id="resultado" style="margin-top: 20px;"></div>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso Distribuidor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #00c6ff, #0072ff);
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    input, button {
+      margin: 5px;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+    }
+    .hidden {
+      display: none;
+    }
+    .card {
+      background: rgba(0,0,0,0.4);
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 300px;
+      margin: auto;
+    }
+  </style>
+  <script type="module">
+    // Importar Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-  <script>
-    // Tu configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyD2MlMhFSi6zVx26tSCxQH_zf7DomtNtJE",
       authDomain: "banca-comisiones.firebaseapp.com",
       projectId: "banca-comisiones",
-      databaseURL: "https://banca-comisiones-default-rtdb.firebaseio.com",
-      storageBucket: "banca-comisiones.appspot.com",
+      storageBucket: "banca-comisiones.firebasestorage.app",
       messagingSenderId: "13645114022",
-      appId: "1:13645114022:web:c69d46b83b12cf20cb6267"
+      appId: "1:13645114022:web:c69d46b83b12cf20cb6267",
+      databaseURL: "https://banca-comisiones-default-rtdb.firebaseio.com/"
     };
 
-    // Inicializa Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    // Función para login
-    function login() {
-      const codigo = document.getElementById("codigo").value.trim();
+    let currentUserKey = null;
+    let currentSaldo = 0;
 
-      db.ref("usuarios/" + codigo).once("value", (snapshot) => {
+    document.addEventListener("DOMContentLoaded", () => {
+      const loginBtn = document.getElementById("loginBtn");
+      const retiroBtn = document.getElementById("retiroBtn");
+
+      loginBtn.addEventListener("click", async () => {
+        const code = document.getElementById("codigo").value;
+        const snapshot = await get(ref(db, 'usuarios/' + code));
         if (snapshot.exists()) {
-          const datos = snapshot.val();
-          document.getElementById("resultado").innerHTML = `
-            <h3>Bienvenido</h3>
-            <p>Saldo: $${datos.saldo}</p>
-          `;
+          const data = snapshot.val();
+          currentUserKey = code;
+          currentSaldo = data.saldo;
+          document.getElementById("welcome").innerText = `Bienvenido ${data.nombre}`;
+          document.getElementById("saldo").innerText = `Saldo: $${data.saldo}`;
+          document.getElementById("retiroSection").classList.remove("hidden");
         } else {
-          document.getElementById("resultado").innerHTML = "Código inválido.";
+          alert("Código inválido");
         }
       });
-    }
+
+      retiroBtn.addEventListener("click", async () => {
+        const monto = parseFloat(document.getElementById("monto").value);
+        const cuenta = document.getElementById("cuenta").value;
+        const banco = document.getElementById("banco").value;
+
+        if (!cuenta || !banco || isNaN(monto)) {
+          alert("Completa todos los campos");
+          return;
+        }
+
+        if (monto > currentSaldo) {
+          alert("Saldo insuficiente");
+          return;
+        }
+
+        currentSaldo -= monto;
+        await update(ref(db, 'usuarios/' + currentUserKey), { saldo: currentSaldo });
+        document.getElementById("saldo").innerText = `Saldo: $${currentSaldo}`;
+        alert(`Retiro de $${monto} procesado con éxito (simulado).`);
+      });
+    });
   </script>
+</head>
+<body>
+  <div class="card">
+    <h2>Acceso Distribuidor</h2>
+    <input type="text" id="codigo" placeholder="Código de acceso">
+    <button id="loginBtn">Ingresar</button>
+
+    <h3 id="welcome">Bienvenido</h3>
+    <p id="saldo">Saldo: $0</p>
+
+    <div id="retiroSection" class="hidden">
+      <h3>Retiro</h3>
+      <input type="number" id="monto" placeholder="Monto a retirar"><br>
+      <input type="text" id="cuenta" placeholder="Número de cuenta"><br>
+      <input type="text" id="banco" placeholder="Banco"><br>
+      <button id="retiroBtn">Retirar</button>
+    </div>
+  </div>
 </body>
 </html>
