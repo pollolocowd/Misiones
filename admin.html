@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Panel de Aprobación</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #eef1f5; padding: 20px; }
+    .login, .panel { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .solicitud { border: 1px solid #ccc; margin: 10px 0; padding: 10px; border-radius: 5px; }
+    button { margin-right: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="login" id="loginPanel">
+  <h2>Acceso Administrador</h2>
+  <input type="password" id="adminKey" placeholder="Clave de acceso">
+  <button onclick="acceder()">Entrar</button>
+  <p id="adminError" style="color: red; display: none;">Clave incorrecta</p>
+</div>
+
+<div class="panel" id="adminPanel" style="display:none;">
+  <h2>Solicitudes Pendientes</h2>
+  <div id="listaSolicitudes"></div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD2MlMhFSi6zVx26tSCxQH_zf7DomtNtJE",
+    authDomain: "banca-comisiones.firebaseapp.com",
+    projectId: "banca-comisiones",
+    storageBucket: "banca-comisiones.firebasestorage.app",
+    messagingSenderId: "13645114022",
+    appId: "1:13645114022:web:c69d46b83b12cf20cb6267"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const claveCorrecta = "Pago";
+
+  function acceder() {
+    const clave = document.getElementById("adminKey").value;
+    if (clave === claveCorrecta) {
+      document.getElementById("loginPanel").style.display = "none";
+      document.getElementById("adminPanel").style.display = "block";
+      cargarSolicitudes();
+    } else {
+      document.getElementById("adminError").style.display = "block";
+    }
+  }
+
+  function cargarSolicitudes() {
+    db.ref("solicitudes").on("value", (snapshot) => {
+      const contenedor = document.getElementById("listaSolicitudes");
+      contenedor.innerHTML = "";
+      snapshot.forEach(userSnap => {
+        const userCode = userSnap.key;
+        userSnap.forEach(snap => {
+          const data = snap.val();
+          if (data.estado === "pendiente") {
+            const div = document.createElement("div");
+            div.className = "solicitud";
+            div.innerHTML = `
+              <strong>Código:</strong> ${userCode}<br>
+              <strong>Banco:</strong> ${data.banco}<br>
+              <strong>Cuenta:</strong> ${data.cuenta}<br>
+              <strong>Monto:</strong> $${data.monto}<br>
+              <button onclick="aprobarRetiro('${userCode}', '${snap.key}', ${data.monto})">✅ Aprobar</button>
+              <button onclick="rechazarRetiro('${userCode}', '${snap.key}')">❌ Rechazar</button>
+            `;
+            contenedor.appendChild(div);
+          }
+        });
+      });
+    });
+  }
+
+  function aprobarRetiro(codigo, solicitudId, monto) {
+    const userRef = db.ref('usuarios/' + codigo);
+    userRef.get().then(snapshot => {
+      if (snapshot.exists()) {
+        let saldo = snapshot.val().saldo;
+        if (saldo >= monto) {
+          userRef.update({ saldo: saldo - monto });
+          db.ref(`solicitudes/${codigo}/${solicitudId}/estado`).set("aprobado");
+        } else {
+          alert("Saldo insuficiente para aprobar.");
+        }
+      }
+    });
+  }
+
+  function rechazarRetiro(codigo, solicitudId) {
+    db.ref(`solicitudes/${codigo}/${solicitudId}/estado`).set("rechazado");
+  }
+</script>
+</body>
+</html>
