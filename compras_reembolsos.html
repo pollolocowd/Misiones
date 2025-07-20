@@ -32,7 +32,7 @@
   </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getDatabase, ref, get, update, push, child } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+    import { getDatabase, ref, get, update, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD2MlMhFSi6zVx26tSCxQH_zf7DomtNtJE",
@@ -78,7 +78,6 @@
 
       document.getElementById("saldo").innerText = `Saldo: $${saldoActual}`;
       btn.innerText = "Recomprar";
-      btn.disabled = false;
       btn.onclick = () => solicitarRecompra(producto, btn);
     }
 
@@ -90,18 +89,29 @@
         timestamp: Date.now()
       };
 
-      await push(ref(db, "recompras/" + userKey), solicitud);
+      const refRecompra = push(ref(db, "recompras/" + userKey));
+      await update(refRecompra, solicitud);
 
       alert("Tu solicitud de recompra fue enviada. Espera que el administrador libere el saldo.");
 
-      // Desactiva temporalmente el botón para evitar múltiples solicitudes
-      btn.disabled = true;
+      // Escuchar cambios en esa solicitud
+      onValue(refRecompra, (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.estado === "aprobado") {
+          saldoActual += producto.precio;
+          update(ref(db, "usuarios/" + userKey), { saldo: saldoActual });
+          document.getElementById("saldo").innerText = `Saldo: $${saldoActual}`;
+          alert("El administrador ha aprobado la recompra. El saldo fue devuelto.");
+          // Evitar que vuelva a escucharse
+          refRecompra.off();
+        }
+      });
     }
 
     document.addEventListener("DOMContentLoaded", () => {
       if (!userKey) {
         alert("No has iniciado sesión. Redirigiendo...");
-        location.href = "index.html"; // Asegúrate de tener esta página
+        location.href = "index.html";
         return;
       }
 
